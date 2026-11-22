@@ -1,9 +1,16 @@
+
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 
-// 環境変数から秘密鍵を取得（存在しない場合はエラーにする）
-const SECRET_KEY = process.env.JWT_SECRET;
-if (!SECRET_KEY) throw new Error('環境変数JWT_SECRETが設定されていません。');
-const secret = new TextEncoder().encode(SECRET_KEY);
+// 秘密鍵を取得する関数
+function getSecret() {
+  const secretKey = process.env.JWT_SECRET;
+
+  if (!secretKey) {
+    throw new Error('環境変数JWT_SECRETが設定されていません。');
+  }
+
+  return new TextEncoder().encode(secretKey);
+}
 
 // トークンを生成する関数
 export function generateToken(payload: JWTPayload): Promise<string> {
@@ -11,13 +18,21 @@ export function generateToken(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1h')
-    .sign(secret);
+    .sign(getSecret());
 }
 
-// トークンを検証する関数（失敗した場合はnullを返す）
-export async function verifyToken(token: string): Promise<JWTPayload | null> {
+// トークンを検証する関数
+export async function verifyToken(
+  token: string
+): Promise<JWTPayload | null> {
+  // 設定漏れは認証エラーとして隠さず、明示的にエラーにする
+  const secret = getSecret();
+
   try {
-    const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ['HS256'],
+    });
+
     return payload;
   } catch (err) {
     console.error('jwtVerify失敗：', err);

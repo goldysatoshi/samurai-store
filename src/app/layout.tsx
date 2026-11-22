@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import HeaderWithAuth from "@/components/HeaderWithAuth";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header"; // Headerコンポーネント
@@ -30,7 +32,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <CartProvider>
-          <Header user={user} />
+          <Suspense fallback={<Header user={null} />}>
+            <HeaderWithAuth />
+          </Suspense>
           {children}
           <Footer />
         </CartProvider>
